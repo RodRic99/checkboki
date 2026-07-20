@@ -67,7 +67,9 @@ final class PgnSanitizer {
             if (variationDepth == 0) result.append(current);
         }
 
-        // 숫자 주석 기호를 없애고 줄바꿈/연속 공백을 한 칸으로 통일해 읽기 쉽게 만든다.
-        return result.toString().replaceAll("\\$\\d+", " ").replaceAll("\\s+", " ").trim();
+        // 먼저 불규칙한 공백을 정리한 뒤, 새 백 수의 번호 앞에서 줄을 바꾼다.
+        // 따라서 한 줄에는 "1. e4 e5"처럼 백과 흑이 각각 한 수씩 표시된다.
+        String compact = result.toString().replaceAll("\\$\\d+", " ").replaceAll("\\s+", " ").trim();
+        return compact.replaceAll("\\s+(?=\\d+\\.(?!\\.))", "\n");
     }
 }

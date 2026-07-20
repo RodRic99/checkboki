@@ -61,7 +61,13 @@ function sanitizePgn(pgn: string): string {
     if (character === ')' && variationDepth > 0) { variationDepth--; continue; }
     if (variationDepth === 0) cleanedMoves += character;
   }
-  cleanedMoves = cleanedMoves.replace(/\$\d+/g, ' ').replace(/\s+/g, ' ').trim();
+  // 한 줄에 백과 흑이 각각 한 수씩 오도록 다음 백 수의 번호 앞에서 줄을 바꾼다.
+  // 예: "1. e4 e5\n2. Nf3 Nc6"
+  cleanedMoves = cleanedMoves
+    .replace(/\$\d+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\s+(?=\d+\.(?!\.))/g, '\n');
 
   const cleanedHeaders = keptHeaderNames
     .filter((name) => headers.get(name)?.trim())

@@ -1,7 +1,7 @@
 {
   "name": "chess-review-desktop",
   "productName": "쳌볶이",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {

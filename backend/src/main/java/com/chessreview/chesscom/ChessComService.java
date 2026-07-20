@@ -61,7 +61,7 @@ public class ChessComService {
     private ChessComDtos.Game toGame(JsonNode node) {
         String url = node.path("url").asText();
         String id = url.substring(url.lastIndexOf('/') + 1);
-        return new ChessComDtos.Game(id, url, node.path("pgn").asText(), node.path("end_time").asLong(),
+        return new ChessComDtos.Game(id, url, PgnSanitizer.keepPlayersAndMoves(node.path("pgn").asText()), node.path("end_time").asLong(),
                 node.path("time_class").asText(), node.path("time_control").asText(),
                 Boolean.toString(node.path("rated").asBoolean()), player(node.path("white")), player(node.path("black")));
     }

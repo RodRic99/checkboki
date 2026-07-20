@@ -22,12 +22,53 @@ const classificationMeta: Record<string, { icon: string; label: string; tone: st
   BLUNDER: { icon: '??', label: '블런더', tone: 'blunder' },
 };
 
-const samplePgn = `[Event "Casual Game"]
-[White "White"]
+const samplePgn = `[White "White"]
 [Black "Black"]
 [Result "1-0"]
 
 1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ Ke6 8. Nc3 Ncb4 9. a3 Nxc2+ 10. Kd1 Nxa1 11. Nxd5 Kd6 12. d4 h5 13. dxe5+ Kc5 14. Be3+ Kxc4 15. Qe4+ Kb5 16. Nc3+ Ka6 17. Qa4# 1-0`;
+
+/**
+ * 직접 붙여 넣은 PGN도 Chess.com에서 받은 PGN과 같은 모양으로 정리한다.
+ * 선수 이름/레이팅/결과만 헤더에 남기며, 시계 주석·일반 주석·후보 변화·NAG를 제거한다.
+ * 괄호와 중괄호는 중첩될 수 있어 단순 정규식 대신 글자를 순서대로 읽는다.
+ */
+function sanitizePgn(pgn: string): string {
+  const keptHeaderNames = ['White', 'WhiteElo', 'Black', 'BlackElo', 'Result'];
+  const headerPattern = /^\s*\[([A-Za-z0-9_]+)\s+"((?:\\.|[^"\\])*)"\]\s*$/gm;
+  const headers = new Map<string, string>();
+  let lastHeaderEnd = 0;
+  for (const match of pgn.matchAll(headerPattern)) {
+    if (!headers.has(match[1])) headers.set(match[1], match[2]);
+    lastHeaderEnd = (match.index ?? 0) + match[0].length;
+  }
+
+  const moveText = pgn.slice(lastHeaderEnd);
+  let braceDepth = 0;
+  let variationDepth = 0;
+  let lineComment = false;
+  let cleanedMoves = '';
+  for (const character of moveText) {
+    if (lineComment) {
+      if (character === '\n' || character === '\r') lineComment = false;
+      else continue;
+    }
+    if (character === ';' && braceDepth === 0 && variationDepth === 0) { lineComment = true; continue; }
+    if (character === '{') { braceDepth++; continue; }
+    if (character === '}' && braceDepth > 0) { braceDepth--; continue; }
+    if (braceDepth > 0) continue;
+    if (character === '(') { variationDepth++; continue; }
+    if (character === ')' && variationDepth > 0) { variationDepth--; continue; }
+    if (variationDepth === 0) cleanedMoves += character;
+  }
+  cleanedMoves = cleanedMoves.replace(/\$\d+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const cleanedHeaders = keptHeaderNames
+    .filter((name) => headers.get(name)?.trim())
+    .map((name) => `[${name} "${headers.get(name)}"]`)
+    .join('\n');
+  return [cleanedHeaders, cleanedMoves].filter(Boolean).join('\n\n');
+}
 
 function parsePgn(pgn: string): { moves: MovePayload[]; error?: string } {
   try {
@@ -98,8 +139,10 @@ export default function App() {
 
   /** PGN 문자열을 검증하고 현재 보드/수순/분석 상태를 한 번에 교체한다. */
   const usePgn = (nextPgn: string, success: string) => {
-    const parsed = parsePgn(nextPgn); if (parsed.error) return setMessage(parsed.error);
-    setPgn(nextPgn); setMoves(parsed.moves); setCursor(0); setAnalysis(undefined); setMessage(success);
+    // 정리된 결과를 검증하므로 입력창에 보이는 PGN과 실제 복기 데이터가 항상 일치한다.
+    const cleanedPgn = sanitizePgn(nextPgn);
+    const parsed = parsePgn(cleanedPgn); if (parsed.error) return setMessage(parsed.error);
+    setPgn(cleanedPgn); setMoves(parsed.moves); setCursor(0); setAnalysis(undefined); setMessage(success);
   };
   /** Chess.com 사용자명으로 백엔드 프록시를 호출한다. 브라우저가 Chess.com API를 직접 호출하지 않는다. */
   const searchGames = async () => {

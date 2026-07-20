@@ -43,7 +43,13 @@ function sanitizePgn(pgn: string): string {
     lastHeaderEnd = (match.index ?? 0) + match[0].length;
   }
 
-  const moveText = pgn.slice(lastHeaderEnd);
+  // [{메모}] 블록은 임시 토큰으로 바꿔 일반 중괄호 주석 제거 과정에서 보호한다.
+  const memos: string[] = [];
+  const moveText = pgn.slice(lastHeaderEnd).replace(/\[\{([\s\S]*?)\}\]/g, (_block, memo: string) => {
+    const token = `CHECKBOKIMEMO${memos.length}TOKEN`;
+    memos.push(memo.trim());
+    return token;
+  });
   let braceDepth = 0;
   let variationDepth = 0;
   let lineComment = false;
@@ -68,6 +74,9 @@ function sanitizePgn(pgn: string): string {
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/\s+(?=\d+\.(?!\.))/g, '\n');
+  memos.forEach((memo, index) => {
+    cleanedMoves = cleanedMoves.replace(`CHECKBOKIMEMO${index}TOKEN`, `[{${memo}}]`);
+  });
 
   const cleanedHeaders = keptHeaderNames
     .filter((name) => headers.get(name)?.trim())
@@ -78,8 +87,11 @@ function sanitizePgn(pgn: string): string {
 
 function parsePgn(pgn: string): { moves: MovePayload[]; error?: string } {
   try {
+    // [{메모}]는 화면의 PGN에는 남기되 chess.js에 전달할 때만 제거한다.
+    // 따라서 메모 내용은 수순이나 Stockfish 분석 결과에 영향을 주지 않는다.
+    const pgnWithoutMemos = pgn.replace(/\[\{[\s\S]*?\}\]/g, ' ');
     // chess.js가 PGN 문법과 각 수의 합법성을 함께 검증한다.
-    const chess = new Chess(); chess.loadPgn(pgn);
+    const chess = new Chess(); chess.loadPgn(pgnWithoutMemos);
     const replay = new Chess();
     const moves = chess.history({ verbose: true }).map((move, index) => {
       // Stockfish는 "수를 두기 전"과 "수를 둔 후" 평가의 차이로 수의 품질을 판단한다.
@@ -247,7 +259,7 @@ export default function App() {
         <label htmlFor="username">Chess.com 아이디</label>
         <div className="search-row"><input id="username" value={username} placeholder="예: hikaru" onChange={(e) => setUsername(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void searchGames()} /><button onClick={searchGames} disabled={searching}>{searching ? '조회 중' : '전적 조회'}</button></div>
         {games.length > 0 && <div className="game-list">{games.map((game) => <button key={game.id} onClick={() => selectGame(game)}><span><b>{game.white.username}</b> {game.white.rating} vs <b>{game.black.username}</b> {game.black.rating}</span><small>{new Date(game.endTime * 1000).toLocaleDateString('ko-KR')} · {game.timeClass} · {game.white.result}</small></button>)}</div>}
-        <label htmlFor="pgn">PGN</label><textarea id="pgn" value={pgn} onChange={(e) => setPgn(e.target.value)} />
+        <label htmlFor="pgn">PGN · 메모는 [{'{내용}'}] 형식으로 입력</label><textarea id="pgn" value={pgn} onChange={(e) => setPgn(e.target.value)} />
         <div className="actions"><button className="secondary" onClick={() => usePgn(pgn, 'PGN을 불러왔습니다.')}>기보 불러오기</button><button className="primary" disabled={loading || moves.length === 0} onClick={runAnalysis}>{loading ? '분석 중…' : 'Stockfish 복기'}</button></div>
         <p className="message">{message}</p>
         <div className="move-list">{movePairs.map((pair, index) => <div className="move-row" key={index}><b>{index + 1}.</b>{pair.map((move) => {

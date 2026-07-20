@@ -16,6 +16,6 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY = 'false'
 
 if ($LASTEXITCODE -ne 0) { throw "electron-builder failed with exit code $LASTEXITCODE" }
 
-$artifact = Join-Path $output 'Checkboki-0.1.4-x64.exe'
-Copy-Item -LiteralPath $artifact -Destination (Join-Path $destination 'Checkboki-0.1.4-x64.exe') -Force
-Write-Host "Created: $(Join-Path $destination 'Checkboki-0.1.4-x64.exe')"
+$artifact = Join-Path $output 'Checkboki-0.1.5-x64.exe'
+Copy-Item -LiteralPath $artifact -Destination (Join-Path $destination 'Checkboki-0.1.5-x64.exe') -Force
+Write-Host "Created: $(Join-Path $destination 'Checkboki-0.1.5-x64.exe')"

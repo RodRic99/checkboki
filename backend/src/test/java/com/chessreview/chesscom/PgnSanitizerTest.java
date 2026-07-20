@@ -19,7 +19,7 @@ class PgnSanitizerTest {
                 [ECO "C20"]
 
                 1. e4 {[%clk 0:09:58]} e5 (1... c5) 2. Nf3 $1 Nc6 ; server note
-                3. Bb5 a6 1-0
+                3. Bb5 [{핀을 유지하는 메모}] a6 1-0
                 """;
 
         assertThat(PgnSanitizer.keepPlayersAndMoves(original)).isEqualTo("""
@@ -31,7 +31,7 @@ class PgnSanitizerTest {
 
                 1. e4 e5
                 2. Nf3 Nc6
-                3. Bb5 a6 1-0""");
+                3. Bb5 [{핀을 유지하는 메모}] a6 1-0""");
     }
 
     @Test

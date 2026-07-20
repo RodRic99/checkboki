@@ -1,6 +1,8 @@
 package com.chessreview.chesscom;
 
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +16,7 @@ import java.util.regex.Pattern;
  */
 final class PgnSanitizer {
     private static final Pattern HEADER = Pattern.compile("(?m)^\\s*\\[([A-Za-z0-9_]+)\\s+\"((?:\\\\.|[^\"\\\\])*)\"\\]\\s*$");
+    private static final Pattern USER_MEMO = Pattern.compile("\\[\\{(.*?)\\}\\]", Pattern.DOTALL);
     private static final String[] KEPT_HEADERS = {"White", "WhiteElo", "Black", "BlackElo", "Result"};
 
     private PgnSanitizer() {
@@ -44,13 +47,25 @@ final class PgnSanitizer {
     }
 
     private static String cleanMoveText(String text) {
+        // 사용자가 작성한 [{메모}]는 임시 토큰으로 보호한다. 이렇게 해야 아래의 일반
+        // PGN 주석 제거 과정에서 메모까지 함께 지워지지 않는다.
+        List<String> memos = new ArrayList<>();
+        Matcher memoMatcher = USER_MEMO.matcher(text);
+        StringBuffer protectedText = new StringBuffer();
+        while (memoMatcher.find()) {
+            String token = "CHECKBOKIMEMO" + memos.size() + "TOKEN";
+            memos.add(memoMatcher.group(1).trim());
+            memoMatcher.appendReplacement(protectedText, Matcher.quoteReplacement(token));
+        }
+        memoMatcher.appendTail(protectedText);
+
         StringBuilder result = new StringBuilder();
         int braceDepth = 0;
         int variationDepth = 0;
         boolean lineComment = false;
 
-        for (int index = 0; index < text.length(); index++) {
-            char current = text.charAt(index);
+        for (int index = 0; index < protectedText.length(); index++) {
+            char current = protectedText.charAt(index);
             if (lineComment) {
                 if (current == '\n' || current == '\r') lineComment = false;
                 else continue;
@@ -70,6 +85,12 @@ final class PgnSanitizer {
         // 먼저 불규칙한 공백을 정리한 뒤, 새 백 수의 번호 앞에서 줄을 바꾼다.
         // 따라서 한 줄에는 "1. e4 e5"처럼 백과 흑이 각각 한 수씩 표시된다.
         String compact = result.toString().replaceAll("\\$\\d+", " ").replaceAll("\\s+", " ").trim();
-        return compact.replaceAll("\\s+(?=\\d+\\.(?!\\.))", "\n");
+        String formatted = compact.replaceAll("\\s+(?=\\d+\\.(?!\\.))", "\n");
+        // 화면에는 사용자가 입력한 전용 메모 문법을 복원한다. 실제 PGN 파서는
+        // 프런트에서 이 블록만 제거한 문자열을 읽으므로 수순 해석에는 영향을 주지 않는다.
+        for (int index = 0; index < memos.size(); index++) {
+            formatted = formatted.replace("CHECKBOKIMEMO" + index + "TOKEN", "[{" + memos.get(index) + "}]");
+        }
+        return formatted;
     }
 }

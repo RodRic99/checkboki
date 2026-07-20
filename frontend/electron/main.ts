@@ -15,9 +15,8 @@ function startBundledBackend() {
   const jar = path.join(process.resourcesPath, 'backend', 'checkboki-backend-0.1.0.jar');
   const stockfish = path.join(process.resourcesPath, 'engine', 'stockfish.exe');
 
-  backendProcess = spawn(java, ['-jar', jar], {
+  backendProcess = spawn(java, ['-jar', jar, `--chess-review.stockfish.path=${stockfish}`], {
     windowsHide: true,
-    env: { ...process.env, STOCKFISH_PATH: stockfish },
   });
 
   backendProcess.stderr.on('data', (data) => console.error(`[checkboki-backend] ${data}`));
@@ -48,6 +47,11 @@ const createWindow = () => {
     webPreferences: { contextIsolation: true, sandbox: true },
   });
 
+  // 정적 파일 로드가 실패하면 검은 화면 대신 사용자가 원인을 확인할 수 있는 오류창을 표시한다.
+  window.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    dialog.showErrorBox('쳌볶이 화면 로드 오류', `${errorDescription} (${errorCode})\n${validatedURL}`);
+  });
+
   if (!app.isPackaged) void window.loadURL('http://localhost:5173');
   else void window.loadFile(path.join(__dirname, '../dist/index.html'));
 };
@@ -60,4 +64,3 @@ app.whenReady().then(() => {
 
 app.on('before-quit', stopBundledBackend);
 app.on('window-all-closed', () => process.platform !== 'darwin' && app.quit());
-

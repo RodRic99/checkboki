@@ -7,7 +7,7 @@ Chess.com 기보와 Stockfish를 이용해 수순별로 복기하는 Windows 데
 개발 환경 없이 실행하려면 다음 파일을 더블클릭합니다.
 
 ```text
-distribution\Checkboki-0.1.0-x64.exe
+distribution\Checkboki-0.1.1-x64.exe
 ```
 
 Portable 실행 파일 안에 Java 17 런타임, Spring Boot 백엔드, Stockfish 18이 포함되어 있으므로 별도 설치가 필요하지 않습니다. 처음 실행할 때 압축을 임시 폴더에 푸는 동안 잠시 시간이 걸릴 수 있습니다.

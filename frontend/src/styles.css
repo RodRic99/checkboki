@@ -1,0 +1,62 @@
+:root { font-family: 'Segoe UI', Arial, sans-serif; color: #ecf2ec; background: #0d110e; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 1000px; min-height: 100vh; background: radial-gradient(circle at 20% 0%, #26322a 0, #111612 35%, #0b0e0c 100%); }
+button, textarea { font: inherit; }
+button { cursor: pointer; }
+.app-shell { max-width: 1280px; margin: auto; padding: 26px 34px 40px; }
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.brand { display: flex; align-items: center; gap: 13px; }.brand img { width: 58px; height: 58px; object-fit: contain; filter: drop-shadow(0 5px 10px #0007); }
+h1 { font-family: Georgia, serif; font-size: 34px; margin: 2px 0; letter-spacing: -.5px; }
+.eyebrow { color: #b9cc91; font-size: 11px; letter-spacing: 2.2px; font-weight: 700; }
+.status-dot { color: #b9cc91; background: #1a231c; border: 1px solid #344337; padding: 8px 13px; border-radius: 99px; font-size: 13px; }
+.workspace { display: grid; grid-template-columns: minmax(580px, 1.35fr) minmax(360px, .8fr); gap: 28px; }
+.board-panel, aside { background: rgba(22, 28, 23, .88); border: 1px solid #303a32; border-radius: 18px; box-shadow: 0 24px 70px #0007; }
+.board-panel { padding: 22px; }
+/* 체스판: 8×8 행/열을 모두 고정해 기물이나 라벨 크기와 무관하게 항상 정사각형을 유지한다. */
+.board { position: relative; width: min(100%, 650px); aspect-ratio: 1 / 1; margin: auto; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); overflow: hidden; border-radius: 8px; box-shadow: 0 12px 35px #0008; }
+/* 추천 화살표는 보드 전체를 덮는 SVG지만 pointer-events를 꺼서 클릭/드래그 입력을 통과시킨다. */
+.recommendation-arrow { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.recommendation-arrow line { stroke: #d4a72c; stroke-width: .18; stroke-linecap: round; opacity: .82; filter: drop-shadow(0 .04px .08px #0009); }
+.recommendation-arrow marker path { fill: #d4a72c; opacity: .92; }
+.square { position: relative; display: grid; min-width: 0; min-height: 0; aspect-ratio: 1 / 1; place-items: center; overflow: hidden; font-size: clamp(42px, 5vw, 66px); line-height: 1; }
+.chess-piece { position: relative; z-index: 2; cursor: grab; user-select: none; transition: transform .12s ease, filter .12s ease; }
+.chess-piece:active { cursor: grabbing; transform: scale(1.08); }
+/* 빈 합법 칸은 점, 상대 기물이 있는 합법 칸은 테두리로 구분한다. */
+.legal-target::after { content: ''; position: absolute; width: 22%; aspect-ratio: 1; border-radius: 50%; background: #17201666; z-index: 1; pointer-events: none; }
+.legal-target:has(.chess-piece:not(:empty))::after { width: 78%; background: transparent; border: 5px solid #17201655; }
+.selected-square { box-shadow: inset 0 0 0 5px #d7e9a8; }
+.drag-over { box-shadow: inset 0 0 0 5px #d7e9a8; }
+.board-evaluation-icon { position: absolute; z-index: 5; right: 3px; top: 3px; display: grid; place-items: center; min-width: 25px; height: 25px; padding: 0 4px; border: 2px solid #eef4e9; border-radius: 7px; color: #fff; box-shadow: 0 2px 7px #0008; font-size: 11px; font-weight: 900; line-height: 1; pointer-events: none; }
+.light { background: #d6ddc2; }.dark { background: #687c5a; }
+.white-piece { color: #fffdf1; text-shadow: 0 2px 2px #000c; }.black-piece { color: #172018; text-shadow: 0 1px 1px #fff5; }
+.rank-label,.file-label { position: absolute; font-size: 10px; font-weight: 700; color: #30402f; }.rank-label { left: 4px; top: 3px; }.file-label { right: 4px; bottom: 2px; }
+.controls { display: grid; grid-template-columns: 46px 46px 1fr 46px 46px; gap: 7px; margin-top: 18px; }
+.controls button, .move-row button { border: 0; background: #242c25; color: #e7ede7; border-radius: 7px; padding: 10px; }
+.controls span { text-align: center; padding: 10px; color: #c9d2ca; }
+.comment-card { margin-top: 14px; padding: 14px 17px; background: #111713; border-left: 3px solid #b9cc91; border-radius: 7px; }
+.comment-card > span { color: #b9cc91; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; }.comment-card p { margin: 7px 0 0; font-size: 14px; color: #cbd4cc; }
+.evaluation-badge { display: inline-flex; align-items: center; gap: 7px; margin: -2px 9px 6px -4px; padding: 5px 9px 5px 6px; border-radius: 7px; color: #fff; vertical-align: middle; }.evaluation-badge b { display: grid; place-items: center; min-width: 24px; height: 24px; border-radius: 5px; background: #ffffff25; font-size: 15px; }.evaluation-badge span { font-size: 12px; font-weight: 800; }
+/* Stockfish 분류별 공통 색상. 평가 카드, 수순 목록, 보드 아이콘이 같은 클래스를 공유한다. */
+.only { background: #8d58b5; }.best { background: #2f9e77; }.recommended { background: #5b8f72; }.good { background: #698f98; }.inaccuracy { background: #d4a72c; }.mistake { background: #db7b32; }.blunder { background: #cc4545; }
+aside { padding: 22px; min-height: 700px; }
+.tabs { display: flex; gap: 24px; border-bottom: 1px solid #333d35; padding-bottom: 13px; margin-bottom: 18px; }.tabs strong { color: #bdd092; }.tabs span { color: #707c72; }
+label { display: block; color: #9fac9f; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+input { min-width: 0; background: #0e1410; color: #e3e9e4; border: 1px solid #364139; border-radius: 8px; padding: 10px 12px; font: inherit; }
+.search-row { display: grid; grid-template-columns: 1fr 100px; gap: 8px; margin-bottom: 12px; }.search-row button { border: 0; border-radius: 8px; background: #b9cc91; color: #172016; font-weight: 700; }.search-row button:disabled { opacity: .55; }
+.game-list { display: grid; gap: 5px; max-height: 190px; overflow: auto; margin-bottom: 16px; padding-right: 3px; }.game-list button { display: flex; flex-direction: column; gap: 4px; border: 1px solid #303b32; border-radius: 8px; background: #111713; color: #d7dfd8; padding: 9px 11px; text-align: left; }.game-list button:hover { border-color: #82966d; background: #1c251e; }.game-list small { color: #859187; }
+textarea { width: 100%; height: 155px; resize: vertical; background: #0e1410; color: #cbd5cc; border: 1px solid #364139; border-radius: 9px; padding: 12px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.55; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 11px; }.actions button { border-radius: 8px; padding: 11px; font-weight: 700; border: 1px solid #465148; }.primary { background: #b9cc91; color: #172016; }.secondary { background: #222a24; color: #d5ddd6; }.actions button:disabled { opacity: .55; }
+.message { min-height: 36px; color: #9ca99e; font-size: 12px; line-height: 1.5; }
+.move-list { max-height: 343px; overflow: auto; background: #101511; border-radius: 9px; padding: 8px; }
+.move-row { display: grid; grid-template-columns: 35px 1fr 1fr; align-items: center; gap: 5px; }.move-row > b { color: #657067; font-size: 12px; text-align: right; padding-right: 7px; }.move-row button { display: flex; align-items: center; justify-content: space-between; text-align: left; padding: 8px 10px; background: transparent; }.move-row button:hover,.move-row button.active { background: #344134; color: #d9e9b5; }
+.move-icon { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: 5px; border-radius: 6px; color: #fff; font-size: 11px; font-style: normal; font-weight: 900; }
+/* 프로모션 선택 모달은 보드보다 높은 z-index를 사용하고 배경 클릭으로 취소할 수 있다. */
+.modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; background: #050806c7; backdrop-filter: blur(6px); }
+.promotion-dialog { width: min(480px, 100%); padding: 25px; border: 1px solid #435047; border-radius: 16px; background: #171e19; box-shadow: 0 28px 80px #000b; text-align: center; }
+.promotion-dialog h2 { margin: 7px 0 20px; font-family: Georgia, serif; font-size: 23px; }
+.promotion-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.promotion-options button { display: grid; gap: 4px; border: 1px solid #3c493f; border-radius: 10px; padding: 12px 6px 9px; background: #222b24; color: #eef3ee; }
+.promotion-options button:hover, .promotion-options button:focus-visible { border-color: #bdd092; background: #334035; outline: none; transform: translateY(-2px); }
+.promotion-options span { font-size: 48px; line-height: 1; }.promotion-options small { color: #aeb9af; font-weight: 700; }
+.promotion-cancel { margin-top: 17px; border: 0; background: transparent; color: #9da89f; padding: 7px 15px; }
+@media(max-width: 1050px) { .app-shell{padding:18px}.workspace{gap:16px}.board-panel{padding:15px} }

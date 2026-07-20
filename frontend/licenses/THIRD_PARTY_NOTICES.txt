@@ -1,0 +1,14 @@
+쳌볶이 제3자 소프트웨어 고지
+
+Stockfish 18
+- 공식 프로젝트: https://github.com/official-stockfish/Stockfish
+- 소스 코드: https://github.com/official-stockfish/Stockfish/tree/sf_18
+- 라이선스: GNU General Public License version 3
+- 전체 라이선스 사본은 같은 폴더의 STOCKFISH-COPYING.txt를 참조하십시오.
+
+Electron 및 JavaScript 의존성
+- 각 패키지의 라이선스 정보는 애플리케이션 패키지와 node_modules 메타데이터를 따릅니다.
+
+Eclipse Temurin / OpenJDK 17 Runtime
+- https://adoptium.net/
+- OpenJDK는 GPLv2 with Classpath Exception 조건으로 배포됩니다.

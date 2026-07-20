@@ -1,0 +1,51 @@
+{
+  "name": "chess-review-desktop",
+  "productName": "쳌볶이",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:web\" \"npm:dev:electron\"",
+    "dev:web": "vite",
+    "dev:electron": "wait-on tcp:5173 && tsc -p electron/tsconfig.json && electron .",
+    "build": "tsc -b && vite build && tsc -p electron/tsconfig.json",
+    "dist:win": "npm run build && powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package-win.ps1",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "chess.js": "^1.4.0",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "concurrently": "latest",
+    "electron": "latest",
+    "typescript": "latest",
+    "wait-on": "latest",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "kr.checkboki.desktop",
+    "productName": "쳌볶이",
+    "asar": true,
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "dist-electron/**/*", "assets/checkboki-icon.png", "package.json"],
+    "extraResources": [
+      { "from": "../backend/build/libs/checkboki-backend-0.1.0.jar", "to": "backend/checkboki-backend-0.1.0.jar" },
+      { "from": "runtime", "to": "runtime" },
+      { "from": "../backend/engine/stockfish.exe", "to": "engine/stockfish.exe" },
+      { "from": "assets/checkboki-icon.png", "to": "assets/checkboki-icon.png" },
+      { "from": "licenses", "to": "licenses" }
+    ],
+    "win": {
+      "icon": "assets/checkboki-icon.ico",
+      "artifactName": "Checkboki-${version}-${arch}.${ext}",
+      "target": [{ "target": "portable", "arch": ["x64"] }]
+    }
+  }
+}

@@ -15,6 +15,12 @@ public class AnalysisController {
     public AnalysisDtos.Response analyze(@Valid @RequestBody AnalysisDtos.Request request) {
         return service.analyze(request.moves());
     }
+
+    /** 보드 포지션이 바뀔 때 호출하는 단일 포지션 실시간 추천 API다. */
+    @PostMapping("/position")
+    public AnalysisDtos.PositionResponse analyzePosition(@Valid @RequestBody AnalysisDtos.PositionRequest request) {
+        return service.analyzePosition(request.fen());
+    }
     /** UI가 분석 전에 Stockfish 설치 여부를 확인할 수 있는 가벼운 상태 API다. */
     @GetMapping("/engine")
     public AnalysisDtos.EngineStatus engine() {

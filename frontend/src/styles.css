@@ -31,6 +31,8 @@ h1 { font-family: Georgia, serif; font-size: 34px; margin: 2px 0; letter-spacing
 .white-piece { color: #fffdf1; text-shadow: 0 2px 2px #000c; }.black-piece { color: #172018; text-shadow: 0 1px 1px #fff5; }
 .rank-label,.file-label { position: absolute; font-size: 10px; font-weight: 700; color: #30402f; }.rank-label { left: 4px; top: 3px; }.file-label { right: 4px; bottom: 2px; }
 .controls { display: grid; grid-template-columns: 46px 46px 1fr 46px 46px; gap: 7px; margin-top: 18px; }
+.live-analysis { display: flex; justify-content: center; align-items: center; gap: 7px; min-height: 27px; color: #98a69b; font-size: 12px; }.live-analysis span { color: #7fa56e; font-size: 9px; }.live-analysis span.thinking { color: #d4a72c; animation: engine-pulse .85s ease-in-out infinite alternate; }
+@keyframes engine-pulse { to { opacity: .3; transform: scale(.7); } }
 .controls button, .move-row button { border: 0; background: #242c25; color: #e7ede7; border-radius: 7px; padding: 10px; }
 .controls span { text-align: center; padding: 10px; color: #c9d2ca; }
 .comment-card { margin-top: 14px; padding: 14px 17px; background: #111713; border-left: 3px solid #b9cc91; border-radius: 7px; }

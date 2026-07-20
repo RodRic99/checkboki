@@ -20,4 +20,7 @@ public final class AnalysisDtos {
     public record Review(int ply, int score, int centipawnLoss, String bestMove, String classification, String comment) {}
     public record Response(String engine, String summary, List<Review> reviews) {}
     public record EngineStatus(boolean available, String message) {}
+    /** 현재 포지션에서 즉시 다음 수를 추천하기 위한 가벼운 요청/응답 DTO다. */
+    public record PositionRequest(@NotBlank String fen) {}
+    public record PositionResponse(int score, String bestMove) {}
 }

@@ -40,6 +40,14 @@ public class AnalysisService {
         return new AnalysisDtos.Response("Stockfish", "Stockfish 분석 완료 · " + moves.size() + "개 반수 · 실수 후보 " + mistakes + "개", reviews);
     }
 
+    /** 현재 포지션 하나만 평가해 실시간 보드 조작에 사용할 추천 수를 반환한다. */
+    public AnalysisDtos.PositionResponse analyzePosition(String fen) {
+        var evaluation = stockfish.evaluate(fen);
+        boolean whiteToMove = fen.contains(" w ");
+        int whiteScore = whiteToMove ? evaluation.sideToMoveScore() : -evaluation.sideToMoveScore();
+        return new AnalysisDtos.PositionResponse(whiteScore, evaluation.bestMove());
+    }
+
     /**
      * 센티폰 손실로 분류하되, 손실이 거의 없고 대안과 100cp 이상 차이나면 유일수로 본다.
      * 임계값을 한곳에 모아 향후 사용자 설정으로 분리하기 쉽게 했다.

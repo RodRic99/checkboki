@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Chess, type Square } from 'chess.js';
 import ChessBoard from './ChessBoard';
-import { analyzeGame, fetchChessComGames } from './api';
+import { analyzeGame, analyzePosition, fetchChessComGames } from './api';
 import type { AnalysisResponse, ChessComGame, MovePayload } from './types';
 import appIcon from '../assets/checkboki-icon.png';
 
@@ -56,6 +56,9 @@ export default function App() {
   const [games, setGames] = useState<ChessComGame[]>([]);
   const [searching, setSearching] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>();
+  const [liveRecommendation, setLiveRecommendation] = useState<string>();
+  const [liveScore, setLiveScore] = useState<number>();
+  const [liveAnalyzing, setLiveAnalyzing] = useState(false);
   const fen = cursor === 0 ? new Chess().fen() : moves[cursor - 1].fen;
   // cursor는 반수(half-move) 기준이다. 0은 시작 포지션, 1은 백의 첫 수 이후를 뜻한다.
   const review = analysis?.reviews.find((item) => item.ply === cursor);
@@ -72,6 +75,26 @@ export default function App() {
     } catch { return undefined; }
   })();
   const movePairs = useMemo(() => Array.from({ length: Math.ceil(moves.length / 2) }, (_, i) => moves.slice(i * 2, i * 2 + 2)), [moves]);
+
+  /**
+   * 현재 FEN이 바뀌면 자동으로 Stockfish 추천을 갱신한다.
+   * 250ms 안에 또 수가 바뀌면 타이머와 fetch를 취소해 오래된 화살표가 표시되지 않게 한다.
+   */
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLiveAnalyzing(true);
+      try {
+        const result = await analyzePosition(fen, controller.signal);
+        setLiveRecommendation(result.bestMove); setLiveScore(result.score);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          setLiveRecommendation(undefined); setLiveScore(undefined);
+        }
+      } finally { if (!controller.signal.aborted) setLiveAnalyzing(false); }
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [fen]);
 
   /** PGN 문자열을 검증하고 현재 보드/수순/분석 상태를 한 번에 교체한다. */
   const usePgn = (nextPgn: string, success: string) => {
@@ -157,7 +180,8 @@ export default function App() {
     <header><div className="brand"><img src={appIcon} alt="" /><div><span className="eyebrow">CHESS × TTEOKBOKKI</span><h1>쳌볶이</h1></div></div><div className="status-dot">Stockfish 복기</div></header>
     <section className="workspace">
       <div className="board-panel">
-        <ChessBoard fen={fen} onMove={playBoardMove} evaluationBadge={boardEvaluationBadge} recommendation={review?.bestMove} />
+        <ChessBoard fen={fen} onMove={playBoardMove} evaluationBadge={boardEvaluationBadge} recommendation={review?.bestMove ?? liveRecommendation} />
+        <div className="live-analysis"><span className={liveAnalyzing ? 'thinking' : ''}>●</span>{liveAnalyzing ? 'Stockfish 계산 중…' : liveRecommendation ? `실시간 추천 ${liveRecommendation} · 평가 ${liveScore! > 0 ? '+' : ''}${((liveScore ?? 0) / 100).toFixed(2)}` : 'Stockfish 연결 대기'}</div>
         <div className="controls">
           <button onClick={() => setCursor(0)}>≪</button><button onClick={() => setCursor(Math.max(0, cursor - 1))}>‹</button>
           <span>{cursor === 0 ? '시작 포지션' : `${Math.ceil(cursor / 2)}.${cursor % 2 ? '' : '..'} ${moves[cursor - 1].san}`}</span>
